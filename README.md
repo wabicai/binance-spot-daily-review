@@ -11,8 +11,8 @@ Binance 现货 watchlist 每日两次复盘缓存层。仓库只保存公开行�
 ├── scripts/build_cache.py      # 拉行情并写 cache/latest.json
 ├── scripts/analyze.py          # 离线技术面预筛
 ├── scripts/codex_review.py     # 调用 Codex CLI 并校验 JSON 决策
-├── cache/                      # 行情缓存，json 不提交
-└── reports/                    # 预筛、复盘和决策产物，json/md 不提交
+├── cache/                      # 行情缓存，由 GitHub Actions 定时更新
+└── reports/                    # 预筛报告可提交；Codex 决策产物不提交
 ```
 
 ## 本地运行
@@ -26,6 +26,23 @@ python3 -m venv .venv
 ```
 
 `scripts/codex_review.py` 默认使用 `codex --search exec`，会复用运行用户本机的 Codex 配置。生产环境必须把 Codex token 放在运行用户私有配置里，权限 0600，不允许提交到仓库。
+
+## 自动更新
+
+GitHub Actions 会每天北京时间 09:05 和 21:05 运行：
+
+```bash
+python scripts/build_cache.py
+python scripts/analyze.py
+```
+
+并提交：
+
+- `cache/latest.json`
+- `cache/<YYYY-MM-DD>_market.json`
+- `reports/latest_prefilter.json`
+
+Codex 决策报告不提交；它属于运行时交易判断，由 `trading-system` 策略在执行前即时生成和校验。
 
 ## 交易执行
 

@@ -2,11 +2,10 @@
 __pycache__/
 .pytest_cache/
 *.pyc
-cache/*.json
 reports/*.json
+!reports/latest_prefilter.json
 reports/*.md
 reports/*_raw.txt
 positions.local.json
 codex.local.toml
 .env
-

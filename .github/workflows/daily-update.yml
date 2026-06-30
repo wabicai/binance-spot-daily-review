@@ -1,0 +1,51 @@
+name: Update Binance Spot Cache
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Beijing time 09:05 and 21:05. Crypto trades 24/7, so run every day.
+    - cron: "5 1,13 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: binance-spot-cache
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build market cache
+        run: python scripts/build_cache.py
+
+      - name: Build technical prefilter
+        run: python scripts/analyze.py
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Commit cache updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cache/*.json reports/latest_prefilter.json
+          if git diff --cached --quiet; then
+            echo "No cache changes to commit"
+          else
+            git commit -m "chore: update binance spot cache"
+            git push
+          fi

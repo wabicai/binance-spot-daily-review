@@ -1,0 +1,98 @@
+{
+  "generated_at": "2026-06-30T09:20:56+00:00",
+  "cache_generated_at": "2026-06-30T09:20:55+00:00",
+  "benchmark": "BTCUSDT",
+  "rows": [
+    {
+      "symbol": "BTCUSDT",
+      "name": "Bitcoin",
+      "price": 59334.0,
+      "ma20": 62747.9795,
+      "ma50": 68581.67940000001,
+      "rsi14": 31.925975693838993,
+      "relative_strength": 0.0,
+      "volume_ratio": 0.8835018125614205,
+      "atr14": 2120.3228571428563,
+      "trend": "下降",
+      "technical_action_hint": "risk_reduce_candidate"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "name": "Ethereum",
+      "price": 1583.83,
+      "ma20": 1673.1785,
+      "ma50": 1862.3310000000001,
+      "rsi14": 35.236285178260346,
+      "relative_strength": 1.210609947451435,
+      "volume_ratio": 0.8532009773154874,
+      "atr14": 74.04714285714287,
+      "trend": "下降",
+      "technical_action_hint": "risk_reduce_candidate"
+    },
+    {
+      "symbol": "SOLUSDT",
+      "name": "Solana",
+      "price": 73.7,
+      "ma20": 70.939,
+      "ma50": 76.3974,
+      "rsi14": 52.75177992445634,
+      "relative_strength": 20.17156722897859,
+      "volume_ratio": 1.0220228248437437,
+      "atr14": 4.201428571428572,
+      "trend": "盘整",
+      "technical_action_hint": "hold"
+    },
+    {
+      "symbol": "BNBUSDT",
+      "name": "BNB",
+      "price": 550.46,
+      "ma20": 583.6020000000001,
+      "ma50": 620.0184,
+      "rsi14": 35.16687395377714,
+      "relative_strength": -2.6105393735805054,
+      "volume_ratio": 0.8212831836247395,
+      "atr14": 18.778571428571404,
+      "trend": "下降",
+      "technical_action_hint": "risk_reduce_candidate"
+    },
+    {
+      "symbol": "XRPUSDT",
+      "name": "XRP",
+      "price": 1.0433,
+      "ma20": 1.1207850000000001,
+      "ma50": 1.229718,
+      "rsi14": 32.63218915500087,
+      "relative_strength": -1.3559799536800252,
+      "volume_ratio": 0.8539600771272422,
+      "atr14": 0.04299999999999996,
+      "trend": "下降",
+      "technical_action_hint": "risk_reduce_candidate"
+    },
+    {
+      "symbol": "HYPERUSDT",
+      "name": "HYPER",
+      "price": 0.0827,
+      "ma20": 0.07715999999999999,
+      "ma50": 0.08703200000000001,
+      "rsi14": 53.658594922122376,
+      "relative_strength": 25.335948629160036,
+      "volume_ratio": 3.129602326006255,
+      "atr14": 0.007271428571428572,
+      "trend": "盘整",
+      "technical_action_hint": "hold"
+    },
+    {
+      "symbol": "ZECUSDT",
+      "name": "ZEC",
+      "price": 392.98,
+      "ma20": 437.84,
+      "ma50": 499.81160000000006,
+      "rsi14": 41.49827913663412,
+      "relative_strength": -0.2859746706336872,
+      "volume_ratio": 0.69296839630984,
+      "atr14": 35.994285714285716,
+      "trend": "下降",
+      "technical_action_hint": "risk_reduce_candidate"
+    }
+  ]
+}
