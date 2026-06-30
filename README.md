@@ -25,7 +25,7 @@ python3 -m venv .venv
 .venv/bin/python scripts/codex_review.py --out reports/latest_decision.json
 ```
 
-`scripts/codex_review.py` 默认使用 `codex exec --search`，会复用运行用户本机的 Codex 配置。生产环境必须把 Codex token 放在运行用户私有配置里，权限 0600，不允许提交到仓库。
+`scripts/codex_review.py` 默认使用 `codex --search exec`，会复用运行用户本机的 Codex 配置。生产环境必须把 Codex token 放在运行用户私有配置里，权限 0600，不允许提交到仓库。
 
 ## 交易执行
 
@@ -38,4 +38,3 @@ python3 -m venv .venv
 - 新闻面不能单独触发建仓或加仓，只能增强或否决技术面信号。
 - `build` / `add` 必须带止损价。
 - 数据过期、决策非法、Codex 输出不可解析时，执行器必须不下单。
-

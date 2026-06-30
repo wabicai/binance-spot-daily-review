@@ -115,7 +115,7 @@ def build_prompt(cache: dict, prefilter: dict, positions: dict, max_symbol_weigh
 
 def run_codex(prompt: str, out: Path) -> dict:
     codex_bin = os.environ.get("CODEX_BIN", "codex")
-    cmd = [codex_bin, "exec", "--search", "--cd", str(ROOT), prompt]
+    cmd = [codex_bin, "--search", "exec", "-C", str(ROOT), prompt]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
     if result.returncode != 0:
         raw_path = out.with_name(out.stem + "_raw.txt")
