@@ -1,0 +1,11 @@
+[Unit]
+Description=Update Binance spot daily review cache
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/binance-spot-daily-review
+Environment=REPO_DIR=/opt/binance-spot-daily-review
+Environment=BRANCH=main
+ExecStart=/opt/binance-spot-daily-review/scripts/update_cache_and_push.sh

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Binance spot daily review cache update twice per day
+
+[Timer]
+OnCalendar=*-*-* 09:05:00 Asia/Shanghai
+OnCalendar=*-*-* 21:05:00 Asia/Shanghai
+Persistent=true
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

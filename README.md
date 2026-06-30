@@ -11,7 +11,7 @@ Binance 现货 watchlist 每日两次复盘缓存层。仓库只保存公开行�
 ├── scripts/build_cache.py      # 拉行情并写 cache/latest.json
 ├── scripts/analyze.py          # 离线技术面预筛
 ├── scripts/codex_review.py     # 调用 Codex CLI 并校验 JSON 决策
-├── cache/                      # 行情缓存，由 GitHub Actions 定时更新
+├── cache/                      # 行情缓存，由 binance-vps 定时更新
 └── reports/                    # 预筛报告可提交；Codex 决策产物不提交
 ```
 
@@ -29,11 +29,10 @@ python3 -m venv .venv
 
 ## 自动更新
 
-GitHub Actions 会每天北京时间 09:05 和 21:05 运行：
+GitHub 托管 runner 访问 `api.binance.com` 可能返回 451 区域限制，因此定时行情更新放在 `binance-vps` 上执行，GitHub 只保存公开缓存结果。VPS 每天北京时间 09:05 和 21:05 运行：
 
 ```bash
-python scripts/build_cache.py
-python scripts/analyze.py
+scripts/update_cache_and_push.sh
 ```
 
 并提交：
@@ -43,6 +42,29 @@ python scripts/analyze.py
 - `reports/latest_prefilter.json`
 
 Codex 决策报告不提交；它属于运行时交易判断，由 `trading-system` 策略在执行前即时生成和校验。
+
+VPS 部署示例：
+
+```bash
+sudo mkdir -p /opt
+sudo chown "$USER:$USER" /opt
+git clone git@github.com:wabicai/binance-spot-daily-review.git /opt/binance-spot-daily-review
+cd /opt/binance-spot-daily-review
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+chmod +x scripts/update_cache_and_push.sh
+sudo cp deploy/binance-spot-cache-update.service /etc/systemd/system/
+sudo cp deploy/binance-spot-cache-update.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now binance-spot-cache-update.timer
+```
+
+手动跑一次：
+
+```bash
+cd /opt/binance-spot-daily-review
+./scripts/update_cache_and_push.sh
+```
 
 ## 交易执行
 
