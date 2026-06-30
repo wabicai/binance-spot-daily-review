@@ -6,7 +6,20 @@
     {"symbol": "ETHUSDT", "name": "Ethereum"},
     {"symbol": "SOLUSDT", "name": "Solana"},
     {"symbol": "BNBUSDT", "name": "BNB"},
-    {"symbol": "XRPUSDT", "name": "XRP"}
+    {"symbol": "XRPUSDT", "name": "XRP"},
+    {"symbol": "HYPERUSDT", "name": "Hyperlane"},
+    {"symbol": "ZECUSDT", "name": "Zcash"},
+    {"symbol": "AAVEUSDT", "name": "Aave"},
+    {"symbol": "UNIUSDT", "name": "Uniswap"},
+    {"symbol": "PENDLEUSDT", "name": "Pendle"},
+    {"symbol": "WIFUSDT", "name": "dogwifhat"},
+    {"symbol": "ENAUSDT", "name": "Ethena"},
+    {"symbol": "SUIUSDT", "name": "Sui"},
+    {"symbol": "LINKUSDT", "name": "Chainlink"},
+    {"symbol": "AVAXUSDT", "name": "Avalanche"},
+    {"symbol": "DOGEUSDT", "name": "Dogecoin"},
+    {"symbol": "PEPEUSDT", "name": "Pepe"},
+    {"symbol": "NEARUSDT", "name": "NEAR Protocol"}
   ],
   "dynamic_universe": {
     "enabled": true,
