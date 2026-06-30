@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+cache/*.json
+reports/*.json
+reports/*.md
+reports/*_raw.txt
+positions.local.json
+codex.local.toml
+.env
+

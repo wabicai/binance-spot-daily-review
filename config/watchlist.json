@@ -1,0 +1,21 @@
+{
+  "benchmark": "BTCUSDT",
+  "quote_asset": "USDT",
+  "core_symbols": [
+    {"symbol": "BTCUSDT", "name": "Bitcoin"},
+    {"symbol": "ETHUSDT", "name": "Ethereum"},
+    {"symbol": "SOLUSDT", "name": "Solana"},
+    {"symbol": "BNBUSDT", "name": "BNB"},
+    {"symbol": "XRPUSDT", "name": "XRP"}
+  ],
+  "dynamic_universe": {
+    "enabled": true,
+    "top_n": 20,
+    "min_quote_volume_usdt": 50000000,
+    "exclude_symbols": ["USDCUSDT", "FDUSDUSDT", "TUSDUSDT", "DAIUSDT", "USD1USDT", "RLUSDUSDT", "EURUSDT"]
+  },
+  "history": {
+    "interval": "1d",
+    "limit": 180
+  }
+}
