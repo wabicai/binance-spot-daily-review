@@ -17,6 +17,7 @@ PREFILTER = ROOT / "reports" / "latest_prefilter.json"
 REPORTS_DIR = ROOT / "reports"
 
 VALID_ACTIONS = {"build", "add", "reduce", "close", "stop_loss", "hold"}
+VALID_SIDES = {"long", "short"}
 
 
 def _as_float(value: Any, key: str) -> float:
@@ -53,6 +54,10 @@ def validate_decision_payload(payload: dict) -> dict:
         target_weight_pct = _as_float(item.get("target_weight_pct", 0), f"decisions[{index}].target_weight_pct")
         max_order_usdt = _as_float(item.get("max_order_usdt", 0), f"decisions[{index}].max_order_usdt")
         stop_loss_price = item.get("stop_loss_price")
+        raw_side = item.get("side", item.get("direction"))
+        side = str(raw_side).strip().lower() if raw_side is not None else "long"
+        if side not in VALID_SIDES:
+            raise ValueError(f"decisions[{index}].side must be long or short")
         sources = item.get("sources", [])
         if not isinstance(sources, list) or any(not isinstance(source, str) for source in sources):
             raise ValueError(f"decisions[{index}].sources must be a string list")
@@ -71,6 +76,7 @@ def validate_decision_payload(payload: dict) -> dict:
             "target_weight_pct": target_weight_pct,
             "max_order_usdt": max_order_usdt,
             "stop_loss_price": None if stop_loss_price is None else _as_float(stop_loss_price, f"decisions[{index}].stop_loss_price"),
+            "side": side,
             "confidence": confidence,
             "technical_reason": str(item.get("technical_reason", "")),
             "fundamental_reason": str(item.get("fundamental_reason", "")),
@@ -96,11 +102,31 @@ def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def build_prompt(cache: dict, prefilter: dict, positions: dict, max_symbol_weight_pct: float, max_gross_weight_pct: float) -> str:
+def build_prompt(
+    cache: dict,
+    prefilter: dict,
+    positions: dict,
+    max_symbol_weight_pct: float,
+    max_gross_weight_pct: float,
+    *,
+    market: str = "spot",
+) -> str:
+    if market == "futures":
+        market_text = (
+            "你是 Binance USDT-M 合约自动复盘策略。请联网搜索必要新闻，并严格只输出一个 JSON 对象，不要 Markdown。\n"
+            "硬规则：只允许 USDT-M 永续合约；允许 long/short，但每条 build/add 决策必须输出 side=long 或 side=short；"
+            "新闻不能单独触发建仓/加仓；build/add 必须有 stop_loss_price 和 sources；"
+            "stop_loss_price 对 long 必须低于现价，对 short 必须高于现价；如果不确定就 hold。\n"
+            "target_weight_pct 表示目标名义敞口占账户权益百分比，max_order_usdt 表示本次最大名义下单金额。\n\n"
+        )
+    else:
+        market_text = (
+            "你是 Binance 现货自动复盘策略。请联网搜索必要新闻，并严格只输出一个 JSON 对象，不要 Markdown。\n"
+            "硬规则：只允许现货；新闻不能单独触发建仓/加仓；build/add 必须有 stop_loss_price 和 sources；"
+            "如果不确定就 hold。\n\n"
+        )
     return (
-        "你是 Binance 现货自动复盘策略。请联网搜索必要新闻，并严格只输出一个 JSON 对象，不要 Markdown。\n"
-        "硬规则：只允许现货；新闻不能单独触发建仓/加仓；build/add 必须有 stop_loss_price 和 sources；"
-        "如果不确定就 hold。\n\n"
+        market_text +
         f"max_symbol_weight_pct={max_symbol_weight_pct}\n"
         f"max_gross_weight_pct={max_gross_weight_pct}\n\n"
         "CLAUDE.md 规则已在仓库根目录。\n\n"
@@ -144,6 +170,7 @@ def main() -> int:
     parser.add_argument("--out", default=str(REPORTS_DIR / "latest_decision.json"))
     parser.add_argument("--max-symbol-weight-pct", type=float, default=20)
     parser.add_argument("--max-gross-weight-pct", type=float, default=80)
+    parser.add_argument("--market", choices=["spot", "futures"], default="spot")
     parser.add_argument("--mock-hold", action="store_true", help="Generate deterministic hold decisions without calling Codex")
     args = parser.parse_args()
 
@@ -166,6 +193,7 @@ def main() -> int:
                     "target_weight_pct": 0,
                     "max_order_usdt": 0,
                     "stop_loss_price": None,
+                    "side": "long",
                     "confidence": 0.5,
                     "technical_reason": row.get("technical_action_hint", "hold"),
                     "fundamental_reason": "mock",
@@ -177,7 +205,14 @@ def main() -> int:
         }
     else:
         payload = run_codex(
-            build_prompt(cache, prefilter, positions, args.max_symbol_weight_pct, args.max_gross_weight_pct),
+            build_prompt(
+                cache,
+                prefilter,
+                positions,
+                args.max_symbol_weight_pct,
+                args.max_gross_weight_pct,
+                market=args.market,
+            ),
             out,
         )
     validated = validate_decision_payload(payload)

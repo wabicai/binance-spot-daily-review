@@ -70,3 +70,23 @@ def test_reject_buy_without_sources():
     else:
         raise AssertionError("expected ValueError")
 
+
+def test_validate_short_futures_side():
+    payload = {
+        "as_of": "2026-06-30T09:30:00+08:00",
+        "summary": "测试做空",
+        "decisions": [{
+            "symbol": "ETHUSDT",
+            "action": "build",
+            "side": "short",
+            "target_weight_pct": 10,
+            "max_order_usdt": 100,
+            "stop_loss_price": 3800,
+            "confidence": 0.8,
+            "technical_reason": "跌破支撑",
+            "fundamental_reason": "弱",
+            "news_reason": "弱",
+            "sources": ["https://example.com"]
+        }]
+    }
+    assert validate_decision_payload(payload)["decisions"][0]["side"] == "short"
