@@ -3,12 +3,25 @@ set -euo pipefail
 
 REPO_DIR="${REPO_DIR:-/opt/binance-spot-daily-review}"
 BRANCH="${BRANCH:-main}"
-LOCK_FILE="${LOCK_FILE:-/tmp/binance-spot-daily-review.lock}"
+LOCK_FILE="${LOCK_FILE:-/tmp/binance-spot-daily-review-$(id -u).lock}"
+RUNTIME_OWNER="${RUNTIME_OWNER:-trading:trading}"
 
 exec 9>"$LOCK_FILE"
 flock -n 9
 
 cd "$REPO_DIR"
+
+fix_runtime_permissions() {
+  if [ "$(id -u)" -ne 0 ]; then
+    return
+  fi
+  local owner_user="${RUNTIME_OWNER%%:*}"
+  if command -v chown >/dev/null 2>&1 && id -u "$owner_user" >/dev/null 2>&1; then
+    chown -R "$RUNTIME_OWNER" cache reports 2>/dev/null || true
+  fi
+}
+
+trap fix_runtime_permissions EXIT
 
 git fetch origin "$BRANCH"
 git checkout "$BRANCH"

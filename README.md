@@ -47,12 +47,13 @@ VPS 部署示例：
 
 ```bash
 sudo mkdir -p /opt
-sudo chown "$USER:$USER" /opt
-git clone git@github.com:wabicai/binance-spot-daily-review.git /opt/binance-spot-daily-review
+sudo id trading >/dev/null 2>&1 || sudo useradd --system --create-home --shell /bin/bash trading
+sudo chown trading:trading /opt
+sudo -u trading git clone git@github.com:wabicai/binance-spot-daily-review.git /opt/binance-spot-daily-review
 cd /opt/binance-spot-daily-review
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-chmod +x scripts/update_cache_and_push.sh
+sudo -u trading python3 -m venv .venv
+sudo -u trading .venv/bin/pip install -r requirements.txt
+sudo chmod +x scripts/update_cache_and_push.sh
 sudo cp deploy/binance-spot-cache-update.service /etc/systemd/system/
 sudo cp deploy/binance-spot-cache-update.timer /etc/systemd/system/
 sudo systemctl daemon-reload
@@ -62,8 +63,7 @@ sudo systemctl enable --now binance-spot-cache-update.timer
 手动跑一次：
 
 ```bash
-cd /opt/binance-spot-daily-review
-./scripts/update_cache_and_push.sh
+sudo -u trading -H sh -lc 'cd /opt/binance-spot-daily-review && ./scripts/update_cache_and_push.sh'
 ```
 
 ## 交易执行

@@ -98,7 +98,7 @@ def build_cache() -> dict:
         "history": {"interval": interval, "limit": limit},
         "market_data": {},
     }
-    failures: list[str] = []
+    failures: list[tuple[str, str]] = []
     for entry in symbols:
         symbol = entry["symbol"]
         try:
@@ -123,11 +123,13 @@ def build_cache() -> dict:
             }
             print(f"  {symbol:<12} {price:>14,.6f} ({out['market_data'][symbol]['snapshot']['change_pct']:+.2f}%)")
         except Exception as exc:
-            failures.append(symbol)
+            failures.append((symbol, str(exc)))
             print(f"[WARN] {symbol}: {exc}", file=sys.stderr)
     benchmark = out["benchmark"]
     if benchmark not in out["market_data"]:
-        raise RuntimeError(f"benchmark {benchmark} missing from market data")
+        failure_text = "; ".join(f"{symbol}: {reason}" for symbol, reason in failures[:5])
+        detail = f" ({failure_text})" if failure_text else ""
+        raise RuntimeError(f"benchmark {benchmark} missing from market data{detail}")
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     today = date.today().strftime("%Y-%m-%d")
     dated = CACHE_DIR / f"{today}_market.json"
@@ -137,7 +139,9 @@ def build_cache() -> dict:
     latest.write_text(payload, encoding="utf-8")
     print(f"\nWrote {latest.relative_to(ROOT)} ({len(out['market_data'])} symbols)")
     if failures:
-        print(f"Failures: {', '.join(failures)}")
+        print("Failures:")
+        for symbol, reason in failures:
+            print(f"  {symbol}: {reason}")
     return out
 
 

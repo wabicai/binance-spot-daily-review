@@ -5,6 +5,9 @@ After=network-online.target
 
 [Service]
 Type=oneshot
+User=trading
+Group=trading
+UMask=0002
 WorkingDirectory=/opt/binance-spot-daily-review
 Environment=REPO_DIR=/opt/binance-spot-daily-review
 Environment=BRANCH=main
