@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from datetime import date, datetime, timezone
@@ -20,8 +21,9 @@ def load_config() -> dict:
     return json.loads(CONFIG.read_text(encoding="utf-8"))
 
 
-def select_symbols(config: dict, client: BinanceSpotData) -> list[dict]:
-    valid = client.tradable_usdt_symbols()
+def select_symbols(config: dict, client: BinanceSpotData, valid: set[str] | None = None) -> list[dict]:
+    if valid is None:
+        valid = client.tradable_usdt_symbols()
     core = []
     seen: set[str] = set()
     for item in config.get("core_symbols", []):
@@ -83,12 +85,45 @@ def parse_klines(raw: list[list]) -> dict:
     }
 
 
-def build_cache() -> dict:
+def position_symbols(snapshot: dict | None) -> set[str]:
+    if not isinstance(snapshot, dict):
+        return set()
+    return {
+        str(symbol).upper()
+        for symbol in (snapshot.get("positions") or {})
+        if str(symbol).upper().endswith("USDT")
+    }
+
+
+def registered_held_symbols(cache_dir: Path | None = None) -> set[str]:
+    """现货和合约各自写下的持仓清单。任一边刷新缓存都要保留另一边的持仓。"""
+    directory = (cache_dir or CACHE_DIR) / "holdings"
+    if not directory.is_dir():
+        return set()
+    held: set[str] = set()
+    for path in directory.glob("*.json"):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for symbol in payload.get("symbols") or []:
+            normalized = str(symbol).upper()
+            if normalized.endswith("USDT"):
+                held.add(normalized)
+    return held
+
+
+def build_cache(positions: dict | None = None) -> dict:
     config = load_config()
     client = BinanceSpotData()
     interval = config.get("history", {}).get("interval", "1d")
     limit = int(config.get("history", {}).get("limit", 180))
-    symbols = select_symbols(config, client)
+    valid = client.tradable_usdt_symbols()
+    symbols = select_symbols(config, client, valid)
+    held = registered_held_symbols() | position_symbols(positions)
+    selected = {entry["symbol"] for entry in symbols}
+    for symbol in sorted(symbol for symbol in held if symbol in valid and symbol not in selected):
+        symbols.append({"symbol": symbol, "name": symbol.removesuffix("USDT")})
     tickers = {str(t.get("symbol", "")).upper(): t for t in client.get_24h_tickers()}
     out = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -130,6 +165,14 @@ def build_cache() -> dict:
         failure_text = "; ".join(f"{symbol}: {reason}" for symbol, reason in failures[:5])
         detail = f" ({failure_text})" if failure_text else ""
         raise RuntimeError(f"benchmark {benchmark} missing from market data{detail}")
+    tradable_held = {symbol for symbol in held if symbol in valid}
+    missing = tradable_held - set(out["market_data"])
+    if missing:
+        raise RuntimeError(f"Held assets missing from market data: {', '.join(sorted(missing))}")
+    skipped = sorted(held - valid)
+    out["held_without_spot_market"] = skipped
+    if skipped:
+        print(f"[WARN] held symbols without a Binance spot market: {', '.join(skipped)}", file=sys.stderr)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     today = date.today().strftime("%Y-%m-%d")
     dated = CACHE_DIR / f"{today}_market.json"
@@ -137,7 +180,11 @@ def build_cache() -> dict:
     payload = json.dumps(out, indent=2, ensure_ascii=False)
     dated.write_text(payload, encoding="utf-8")
     latest.write_text(payload, encoding="utf-8")
-    print(f"\nWrote {latest.relative_to(ROOT)} ({len(out['market_data'])} symbols)")
+    try:
+        shown = latest.relative_to(ROOT)
+    except ValueError:
+        shown = latest
+    print(f"\nWrote {shown} ({len(out['market_data'])} symbols)")
     if failures:
         print("Failures:")
         for symbol, reason in failures:
@@ -146,7 +193,11 @@ def build_cache() -> dict:
 
 
 def main() -> int:
-    build_cache()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--positions", type=Path)
+    args = parser.parse_args()
+    positions = json.loads(args.positions.read_text(encoding="utf-8")) if args.positions else None
+    build_cache(positions)
     return 0
 
 

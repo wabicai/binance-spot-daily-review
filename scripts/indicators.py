@@ -51,6 +51,41 @@ def atr(highs: list[float], lows: list[float], closes: list[float], n: int = 14)
     return sum(true_ranges[-n:]) / n
 
 
+# 连续两日、且高点已经过去，才把仍在均线之上的多头改判为回撤。
+# 12% 高于这段行情里的普通回踩，又盖得住 10 月 29 日冲高后的回吐。
+PULLBACK_LOOKBACK = 20
+PULLBACK_MIN_DRAWDOWN = 0.12
+PULLBACK_MIN_PEAK_AGE = 3
+
+
+def _window_pullback(price: float, highs: list[float]) -> bool:
+    window = [float(item) for item in highs[-PULLBACK_LOOKBACK:]]
+    if len(window) < PULLBACK_LOOKBACK or price <= 0:
+        return False
+    peak = max(window)
+    if peak <= 0:
+        return False
+    age = len(window) - 1 - window.index(peak)
+    return age >= PULLBACK_MIN_PEAK_AGE and (peak - price) / peak >= PULLBACK_MIN_DRAWDOWN
+
+
+def persistent_pullback(closes: list[float], highs: list[float]) -> bool:
+    """均线多头中的失败摆动：最近两个收盘都远离已经走完的 20 日高点。"""
+    if len(closes) < PULLBACK_LOOKBACK + 1 or len(highs) < PULLBACK_LOOKBACK + 1:
+        return False
+    return _window_pullback(float(closes[-2]), highs[:-1]) and _window_pullback(float(closes[-1]), highs)
+
+
+def drawdown_from_high_pct(price: float, highs: list[float]) -> float | None:
+    window = [float(item) for item in highs[-PULLBACK_LOOKBACK:]]
+    if not window or price <= 0:
+        return None
+    peak = max(window)
+    if peak <= 0:
+        return None
+    return (peak - price) / peak * 100
+
+
 def trend_label(price: float, ma20: float | None, ma50: float | None) -> str:
     if ma20 is None or ma50 is None:
         return "未知"
